@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 import java.math.BigDecimal
+import java.util.Date
 
 @Entity(tableName = "cart")
 data class Cart(
@@ -11,78 +12,116 @@ data class Cart(
     @SerializedName("id")
     val id: String,
 
-    @SerializedName("userId")
+    @SerializedName("user_id")
     val userId: String,
 
     @SerializedName("items")
     val items: List<CartItem>,
 
-    @SerializedName("updatedAt")
-    val updatedAt: Long = System.currentTimeMillis()
+    @SerializedName("subtotal")
+    val subtotal: BigDecimal,
+
+    @SerializedName("tax")
+    val tax: BigDecimal,
+
+    @SerializedName("shipping_fee")
+    val shippingFee: BigDecimal,
+
+    @SerializedName("total")
+    val total: BigDecimal,
+
+    @SerializedName("coupon_code")
+    val couponCode: String? = null,
+
+    @SerializedName("discount")
+    val discount: BigDecimal = BigDecimal.ZERO,
+
+    @SerializedName("created_at")
+    val createdAt: Date,
+
+    @SerializedName("updated_at")
+    val updatedAt: Date
 ) {
     data class CartItem(
-        @SerializedName("productId")
+        @SerializedName("product_id")
         val productId: String,
+
+        @SerializedName("name")
+        val name: String,
 
         @SerializedName("quantity")
         val quantity: Int,
 
-        @SerializedName("size")
-        val size: String,
-
-        @SerializedName("color")
-        val color: String,
-
         @SerializedName("price")
         val price: BigDecimal,
 
-        @SerializedName("discountedPrice")
-        val discountedPrice: BigDecimal? = null,
+        @SerializedName("sale_price")
+        val salePrice: BigDecimal? = null,
 
-        @SerializedName("productName")
-        val productName: String,
+        @SerializedName("total")
+        val total: BigDecimal,
 
-        @SerializedName("productImage")
-        val productImage: String
+        @SerializedName("size")
+        val size: String? = null,
+
+        @SerializedName("color")
+        val color: String? = null,
+
+        @SerializedName("image")
+        val image: String? = null,
+
+        @SerializedName("stock_quantity")
+        val stockQuantity: Int,
+
+        @SerializedName("is_available")
+        val isAvailable: Boolean = true
     ) {
-        val finalPrice: BigDecimal
-            get() = discountedPrice ?: price
+        // Computed properties
+        val isOnSale: Boolean
+            get() = salePrice != null && salePrice < price
 
-        val totalPrice: BigDecimal
-            get() = finalPrice * BigDecimal(quantity)
+        val currentPrice: BigDecimal
+            get() = salePrice ?: price
 
-        val hasDiscount: Boolean
-            get() = discountedPrice != null && discountedPrice < price
+        val discountPercentage: Int?
+            get() = if (isOnSale) {
+                ((price - salePrice!!) * BigDecimal(100) / price).toInt()
+            } else null
 
-        val discountPercentage: Int
-            get() = if (hasDiscount && discountedPrice != null) {
-                ((price - discountedPrice) * BigDecimal(100) / price).toInt()
-            } else 0
+        val hasEnoughStock: Boolean
+            get() = stockQuantity >= quantity
+
+        // Helper functions
+        fun getFormattedPrice(): String = "₹%.2f".format(currentPrice)
+        
+        fun getFormattedTotal(): String = "₹%.2f".format(total)
     }
 
-    val isEmpty: Boolean
-        get() = items.isEmpty()
-
-    val itemCount: Int
+    // Computed properties
+    val totalItems: Int
         get() = items.sumOf { it.quantity }
 
-    val subtotal: BigDecimal
-        get() = items.fold(BigDecimal.ZERO) { acc, item -> acc + item.totalPrice }
+    val hasUnavailableItems: Boolean
+        get() = items.any { !it.isAvailable }
 
-    // Assuming a fixed shipping rate for simplicity
-    // In a real app, this would be calculated based on location, weight, etc.
-    val shippingCost: BigDecimal
-        get() = if (isEmpty) BigDecimal.ZERO else BigDecimal("5.99")
+    val hasInsufficientStockItems: Boolean
+        get() = items.any { !it.hasEnoughStock }
 
-    // Assuming a fixed tax rate of 10% for simplicity
-    // In a real app, this would be calculated based on location and tax rules
-    val tax: BigDecimal
-        get() = subtotal * BigDecimal("0.10")
+    val hasCouponApplied: Boolean
+        get() = !couponCode.isNullOrBlank() && discount > BigDecimal.ZERO
 
-    val total: BigDecimal
-        get() = subtotal + shippingCost + tax
+    // Helper functions
+    fun getFormattedSubtotal(): String = "₹%.2f".format(subtotal)
+    
+    fun getFormattedTax(): String = "₹%.2f".format(tax)
+    
+    fun getFormattedShippingFee(): String = "₹%.2f".format(shippingFee)
+    
+    fun getFormattedDiscount(): String = "₹%.2f".format(discount)
+    
+    fun getFormattedTotal(): String = "₹%.2f".format(total)
 
-    fun findItem(productId: String, size: String, color: String): CartItem? {
+    fun findItem(productId: String, size: String? = null, color: String? = null): CartItem? {
         return items.find { 
             it.productId == productId && 
             it.size == size && 
@@ -90,21 +129,23 @@ data class Cart(
         }
     }
 
-    fun containsProduct(productId: String): Boolean {
-        return items.any { it.productId == productId }
-    }
-
-    fun getQuantityFor(productId: String, size: String, color: String): Int {
-        return findItem(productId, size, color)?.quantity ?: 0
+    fun canCheckout(): Boolean {
+        return items.isNotEmpty() &&
+                !hasUnavailableItems &&
+                !hasInsufficientStockItems
     }
 
     companion object {
-        fun createEmpty(userId: String): Cart {
-            return Cart(
-                id = userId, // Using userId as cart id for simplicity
-                userId = userId,
-                items = emptyList()
-            )
-        }
+        fun createEmpty(userId: String) = Cart(
+            id = "",
+            userId = userId,
+            items = emptyList(),
+            subtotal = BigDecimal.ZERO,
+            tax = BigDecimal.ZERO,
+            shippingFee = BigDecimal.ZERO,
+            total = BigDecimal.ZERO,
+            createdAt = Date(),
+            updatedAt = Date()
+        )
     }
 }

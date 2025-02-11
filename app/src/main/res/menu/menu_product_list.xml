@@ -1,56 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    
+
     <item
         android:id="@+id/action_search"
         android:icon="@drawable/ic_search"
-        android:title="@string/search"
+        android:title="Search"
         app:actionViewClass="androidx.appcompat.widget.SearchView"
-        app:showAsAction="ifRoom|collapseActionView" />
+        app:showAsAction="always|collapseActionView" />
 
     <item
         android:id="@+id/action_filter"
         android:icon="@drawable/ic_filter"
-        android:title="@string/filter"
+        android:title="Filter"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_sort"
         android:icon="@drawable/ic_sort"
-        android:title="@string/sort"
+        android:title="Sort"
         app:showAsAction="ifRoom">
-        
+
         <menu>
             <group android:checkableBehavior="single">
                 <item
-                    android:id="@+id/sort_name_asc"
-                    android:title="@string/sort_by_name_asc" />
-                <item
-                    android:id="@+id/sort_name_desc"
-                    android:title="@string/sort_by_name_desc" />
-                <item
                     android:id="@+id/sort_price_low"
-                    android:title="@string/sort_by_price_low" />
+                    android:title="Price: Low to High" />
+
                 <item
                     android:id="@+id/sort_price_high"
-                    android:title="@string/sort_by_price_high" />
+                    android:title="Price: High to Low" />
+
+                <item
+                    android:id="@+id/sort_name_asc"
+                    android:title="Name: A to Z" />
+
+                <item
+                    android:id="@+id/sort_name_desc"
+                    android:title="Name: Z to A" />
+
+                <item
+                    android:id="@+id/sort_rating"
+                    android:title="Rating" />
+
                 <item
                     android:id="@+id/sort_newest"
-                    android:title="@string/sort_by_newest" />
+                    android:title="Newest First" />
             </group>
         </menu>
+
+    </item>
+
+    <item
+        android:id="@+id/action_view_type"
+        android:icon="@drawable/ic_view_grid"
+        android:title="View Type"
+        app:showAsAction="ifRoom">
+
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/view_grid"
+                    android:checked="true"
+                    android:title="Grid View" />
+
+                <item
+                    android:id="@+id/view_list"
+                    android:title="List View" />
+            </group>
+        </menu>
+
     </item>
 
     <item
         android:id="@+id/action_favorites"
-        android:icon="@drawable/ic_favorite"
-        android:title="@string/favorites"
+        android:icon="@drawable/ic_favorite_border"
+        android:title="Favorites"
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/action_settings"
-        android:icon="@drawable/ic_settings"
-        android:title="@string/settings"
+        android:id="@+id/action_clear_filters"
+        android:title="Clear All Filters"
         app:showAsAction="never" />
+
 </menu>

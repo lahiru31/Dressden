@@ -5,13 +5,21 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://jitpack.io' }
     }
 }
 
 rootProject.name = "DressDen"
 include ':app'
+
+// Enable configuration cache
+enableFeaturePreview('CONFIGURATION_CACHE')
+
+// Enable type-safe project accessors
+enableFeaturePreview('TYPESAFE_PROJECT_ACCESSORS')

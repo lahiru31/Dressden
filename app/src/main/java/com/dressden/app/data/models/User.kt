@@ -3,6 +3,7 @@ package com.dressden.app.data.models
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
+import java.util.Date
 
 @Entity(tableName = "users")
 data class User(
@@ -13,63 +14,82 @@ data class User(
     @SerializedName("email")
     val email: String,
 
-    @SerializedName("firstName")
-    val firstName: String,
+    @SerializedName("name")
+    val name: String,
 
-    @SerializedName("lastName")
-    val lastName: String,
+    @SerializedName("phone")
+    val phone: String? = null,
 
-    @SerializedName("phoneNumber")
-    val phoneNumber: String? = null,
+    @SerializedName("profile_image")
+    val profileImage: String? = null,
 
-    @SerializedName("profileImageUrl")
-    val profileImageUrl: String? = null,
+    @SerializedName("created_at")
+    val createdAt: Date,
 
-    @SerializedName("addresses")
-    val addresses: List<Address> = emptyList(),
+    @SerializedName("updated_at")
+    val updatedAt: Date,
 
-    @SerializedName("wishlist")
-    val wishlist: List<String> = emptyList(), // List of product IDs
+    @SerializedName("address_line1")
+    val addressLine1: String? = null,
 
-    @SerializedName("createdAt")
-    val createdAt: Long = System.currentTimeMillis(),
+    @SerializedName("address_line2")
+    val addressLine2: String? = null,
 
-    @SerializedName("updatedAt")
-    val updatedAt: Long = System.currentTimeMillis()
+    @SerializedName("city")
+    val city: String? = null,
+
+    @SerializedName("state")
+    val state: String? = null,
+
+    @SerializedName("postal_code")
+    val postalCode: String? = null,
+
+    @SerializedName("country")
+    val country: String? = null,
+
+    @SerializedName("notification_enabled")
+    val notificationEnabled: Boolean = true,
+
+    @SerializedName("location_enabled")
+    val locationEnabled: Boolean = true,
+
+    @SerializedName("fcm_token")
+    val fcmToken: String? = null,
+
+    @SerializedName("last_login")
+    val lastLogin: Date? = null,
+
+    @SerializedName("preferences")
+    val preferences: Map<String, Any>? = null
 ) {
-    val fullName: String
-        get() = "$firstName $lastName"
+    // Computed properties
+    val fullAddress: String?
+        get() = buildString {
+            addressLine1?.let { append(it) }
+            addressLine2?.let { append(", ").append(it) }
+            city?.let { append(", ").append(it) }
+            state?.let { append(", ").append(it) }
+            postalCode?.let { append(" ").append(it) }
+            country?.let { append(", ").append(it) }
+        }.takeIf { it.isNotEmpty() }
 
-    data class Address(
-        @SerializedName("id")
-        val id: String,
+    val hasCompleteProfile: Boolean
+        get() = !name.isNullOrBlank() && 
+                !email.isNullOrBlank() && 
+                !phone.isNullOrBlank() && 
+                !addressLine1.isNullOrBlank() &&
+                !city.isNullOrBlank() &&
+                !state.isNullOrBlank() &&
+                !postalCode.isNullOrBlank() &&
+                !country.isNullOrBlank()
 
-        @SerializedName("type")
-        val type: AddressType,
-
-        @SerializedName("name")
-        val name: String,
-
-        @SerializedName("streetAddress")
-        val streetAddress: String,
-
-        @SerializedName("city")
-        val city: String,
-
-        @SerializedName("state")
-        val state: String,
-
-        @SerializedName("postalCode")
-        val postalCode: String,
-
-        @SerializedName("country")
-        val country: String,
-
-        @SerializedName("isDefault")
-        val isDefault: Boolean = false
-    )
-
-    enum class AddressType {
-        HOME, WORK, OTHER
+    companion object {
+        fun createEmpty() = User(
+            id = "",
+            email = "",
+            name = "",
+            createdAt = Date(),
+            updatedAt = Date()
+        )
     }
 }

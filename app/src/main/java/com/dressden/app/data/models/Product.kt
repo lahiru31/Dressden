@@ -2,65 +2,121 @@ package com.dressden.app.data.models
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.google.gson.annotations.SerializedName
+import java.math.BigDecimal
 import java.util.Date
 
 @Entity(tableName = "products")
 data class Product(
     @PrimaryKey
+    @SerializedName("id")
     val id: String,
-    
+
+    @SerializedName("name")
     val name: String,
+
+    @SerializedName("description")
     val description: String,
-    val price: Double,
-    val category: String,
-    val imageUrl: String,
-    
-    val isFavorite: Boolean = false,
-    val inStock: Boolean = true,
-    val stockQuantity: Int = 0,
-    
-    val rating: Float = 0f,
-    val reviewCount: Int = 0,
-    
-    val discount: Double = 0.0,
-    val discountEndDate: Date? = null,
-    
-    val sizes: List<String> = emptyList(),
-    val colors: List<String> = emptyList(),
-    
+
+    @SerializedName("price")
+    val price: BigDecimal,
+
+    @SerializedName("sale_price")
+    val salePrice: BigDecimal? = null,
+
+    @SerializedName("category_id")
+    val categoryId: String,
+
+    @SerializedName("category_name")
+    val categoryName: String,
+
+    @SerializedName("images")
+    val images: List<String>,
+
+    @SerializedName("thumbnail")
+    val thumbnail: String,
+
+    @SerializedName("stock_quantity")
+    val stockQuantity: Int,
+
+    @SerializedName("brand")
     val brand: String? = null,
-    val material: String? = null,
-    val care: String? = null,
-    
-    val createdAt: Date = Date(),
-    val updatedAt: Date = Date()
+
+    @SerializedName("size")
+    val size: String? = null,
+
+    @SerializedName("color")
+    val color: String? = null,
+
+    @SerializedName("tags")
+    val tags: List<String> = emptyList(),
+
+    @SerializedName("rating")
+    val rating: Float = 0f,
+
+    @SerializedName("review_count")
+    val reviewCount: Int = 0,
+
+    @SerializedName("created_at")
+    val createdAt: Date,
+
+    @SerializedName("updated_at")
+    val updatedAt: Date,
+
+    @SerializedName("is_featured")
+    val isFeatured: Boolean = false,
+
+    @SerializedName("is_new_arrival")
+    val isNewArrival: Boolean = false,
+
+    @SerializedName("is_bestseller")
+    val isBestseller: Boolean = false,
+
+    @SerializedName("specifications")
+    val specifications: Map<String, String> = emptyMap(),
+
+    @SerializedName("available_sizes")
+    val availableSizes: List<String> = emptyList(),
+
+    @SerializedName("available_colors")
+    val availableColors: List<String> = emptyList()
 ) {
-    val hasDiscount: Boolean
-        get() = discount > 0 && (discountEndDate?.after(Date()) ?: false)
+    // Computed properties
+    val isOnSale: Boolean
+        get() = salePrice != null && salePrice < price
 
-    val finalPrice: Double
-        get() = if (hasDiscount) {
-            price * (1 - discount)
-        } else {
-            price
-        }
+    val currentPrice: BigDecimal
+        get() = salePrice ?: price
 
-    val isAvailable: Boolean
-        get() = inStock && stockQuantity > 0
+    val discountPercentage: Int?
+        get() = if (isOnSale) {
+            ((price - salePrice!!) * BigDecimal(100) / price).toInt()
+        } else null
+
+    val isInStock: Boolean
+        get() = stockQuantity > 0
+
+    val hasVariants: Boolean
+        get() = availableSizes.isNotEmpty() || availableColors.isNotEmpty()
 
     companion object {
-        const val CATEGORY_DRESSES = "dresses"
-        const val CATEGORY_TOPS = "tops"
-        const val CATEGORY_BOTTOMS = "bottoms"
-        const val CATEGORY_OUTERWEAR = "outerwear"
-        const val CATEGORY_ACCESSORIES = "accessories"
-
-        val CATEGORIES = listOf(
-            CATEGORY_DRESSES,
-            CATEGORY_TOPS,
-            CATEGORY_BOTTOMS,
-            CATEGORY_OUTERWEAR,
-            CATEGORY_ACCESSORIES
-        )
+        const val MIN_STOCK_THRESHOLD = 5
     }
+
+    // Helper functions
+    fun isLowStock(): Boolean = stockQuantity in 1..MIN_STOCK_THRESHOLD
+
+    fun hasSpecification(key: String): Boolean = specifications.containsKey(key)
+
+    fun getSpecification(key: String): String? = specifications[key]
+
+    fun hasTag(tag: String): Boolean = tags.contains(tag)
+
+    fun hasSize(size: String): Boolean = availableSizes.contains(size)
+
+    fun hasColor(color: String): Boolean = availableColors.contains(color)
+
+    fun getFormattedPrice(): String = "₹%.2f".format(currentPrice)
+
+    fun getFormattedRating(): String = "%.1f".format(rating)
 }

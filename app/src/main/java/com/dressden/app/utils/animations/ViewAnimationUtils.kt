@@ -1,130 +1,139 @@
 package com.dressden.app.utils.animations
 
-import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.view.animation.AccelerateInterpolator
-import android.view.animation.DecelerateInterpolator
-import androidx.core.view.ViewCompat
-import androidx.core.view.ViewPropertyAnimatorCompat
+import android.view.animation.AnimationUtils
+import android.view.animation.OvershootInterpolator
+import com.dressden.app.R
+import com.dressden.app.utils.Constants
 
 object ViewAnimationUtils {
-    private const val DEFAULT_DURATION = 300L
 
-    fun fadeIn(view: View, duration: Long = DEFAULT_DURATION): ViewPropertyAnimatorCompat {
+    fun animateFavoriteButton(view: View) {
+        val scaleX = ObjectAnimator.ofFloat(view, View.SCALE_X, 1f, 1.2f, 1f)
+        val scaleY = ObjectAnimator.ofFloat(view, View.SCALE_Y, 1f, 1.2f, 1f)
+        val rotation = ObjectAnimator.ofFloat(view, View.ROTATION, 0f, -15f, 15f, 0f)
+
+        AnimatorSet().apply {
+            playTogether(scaleX, scaleY, rotation)
+            duration = Constants.ANIM_DURATION_SHORT
+            interpolator = OvershootInterpolator()
+            start()
+        }
+    }
+
+    fun animateAddToCart(view: View) {
+        val scaleX = ObjectAnimator.ofFloat(view, View.SCALE_X, 1f, 0.8f, 1f)
+        val scaleY = ObjectAnimator.ofFloat(view, View.SCALE_Y, 1f, 0.8f, 1f)
+        val alpha = ObjectAnimator.ofFloat(view, View.ALPHA, 1f, 0.5f, 1f)
+
+        AnimatorSet().apply {
+            playTogether(scaleX, scaleY, alpha)
+            duration = Constants.ANIM_DURATION_SHORT
+            interpolator = AccelerateDecelerateInterpolator()
+            start()
+        }
+    }
+
+    fun animateItemInsertion(view: View) {
         view.alpha = 0f
-        view.visibility = View.VISIBLE
-        return ViewCompat.animate(view)
+        view.translationY = 100f
+
+        view.animate()
             .alpha(1f)
-            .setDuration(duration)
-            .setInterpolator(DecelerateInterpolator())
+            .translationY(0f)
+            .setDuration(Constants.ANIM_DURATION_MEDIUM)
+            .setInterpolator(OvershootInterpolator())
+            .start()
     }
 
-    fun fadeOut(view: View, duration: Long = DEFAULT_DURATION): ViewPropertyAnimatorCompat {
-        return ViewCompat.animate(view)
+    fun animateItemRemoval(view: View, onComplete: () -> Unit) {
+        view.animate()
             .alpha(0f)
-            .setDuration(duration)
-            .setInterpolator(AccelerateInterpolator())
+            .translationX(view.width.toFloat())
+            .setDuration(Constants.ANIM_DURATION_MEDIUM)
+            .withEndAction { onComplete() }
+            .start()
     }
 
-    fun slideIn(view: View, duration: Long = DEFAULT_DURATION): AnimatorSet {
-        val translateAnimator = ObjectAnimator.ofFloat(
-            view,
-            "translationX",
-            view.width.toFloat(),
-            0f
-        )
-        val fadeAnimator = ObjectAnimator.ofFloat(view, "alpha", 0f, 1f)
+    fun animateErrorShake(view: View) {
+        val animation = AnimationUtils.loadAnimation(view.context, R.anim.shake_animation)
+        view.startAnimation(animation)
+    }
 
-        return AnimatorSet().apply {
-            playTogether(translateAnimator, fadeAnimator)
-            this.duration = duration
-            interpolator = AccelerateDecelerateInterpolator()
+    fun animateSuccessCheckmark(view: View) {
+        val scaleX = ObjectAnimator.ofFloat(view, View.SCALE_X, 0f, 1.2f, 1f)
+        val scaleY = ObjectAnimator.ofFloat(view, View.SCALE_Y, 0f, 1.2f, 1f)
+        val rotation = ObjectAnimator.ofFloat(view, View.ROTATION, -45f, 0f)
+
+        AnimatorSet().apply {
+            playTogether(scaleX, scaleY, rotation)
+            duration = Constants.ANIM_DURATION_MEDIUM
+            interpolator = OvershootInterpolator()
+            start()
         }
     }
 
-    fun slideOut(view: View, duration: Long = DEFAULT_DURATION): AnimatorSet {
-        val translateAnimator = ObjectAnimator.ofFloat(
-            view,
-            "translationX",
-            0f,
-            view.width.toFloat()
-        )
-        val fadeAnimator = ObjectAnimator.ofFloat(view, "alpha", 1f, 0f)
-
-        return AnimatorSet().apply {
-            playTogether(translateAnimator, fadeAnimator)
-            this.duration = duration
-            interpolator = AccelerateDecelerateInterpolator()
-        }
+    fun animateRefresh(view: View) {
+        val rotation = ObjectAnimator.ofFloat(view, View.ROTATION, 0f, 360f)
+        rotation.duration = Constants.ANIM_DURATION_MEDIUM
+        rotation.repeatCount = ObjectAnimator.INFINITE
+        rotation.start()
     }
 
-    fun scaleIn(view: View, duration: Long = DEFAULT_DURATION): AnimatorSet {
-        view.scaleX = 0f
-        view.scaleY = 0f
-        view.visibility = View.VISIBLE
-
-        val scaleXAnimator = ObjectAnimator.ofFloat(view, "scaleX", 0f, 1f)
-        val scaleYAnimator = ObjectAnimator.ofFloat(view, "scaleY", 0f, 1f)
-
-        return AnimatorSet().apply {
-            playTogether(scaleXAnimator, scaleYAnimator)
-            this.duration = duration
-            interpolator = AccelerateDecelerateInterpolator()
-        }
+    fun animateExpand(view: View, initialHeight: Int, targetHeight: Int) {
+        val heightAnimator = ObjectAnimator.ofInt(view, "height", initialHeight, targetHeight)
+        heightAnimator.duration = Constants.ANIM_DURATION_MEDIUM
+        heightAnimator.interpolator = AccelerateDecelerateInterpolator()
+        heightAnimator.start()
     }
 
-    fun scaleOut(view: View, duration: Long = DEFAULT_DURATION): AnimatorSet {
-        val scaleXAnimator = ObjectAnimator.ofFloat(view, "scaleX", 1f, 0f)
-        val scaleYAnimator = ObjectAnimator.ofFloat(view, "scaleY", 1f, 0f)
-
-        return AnimatorSet().apply {
-            playTogether(scaleXAnimator, scaleYAnimator)
-            this.duration = duration
-            interpolator = AccelerateDecelerateInterpolator()
-            addListener(object : Animator.AnimatorListener {
-                override fun onAnimationStart(animation: Animator) {}
-                override fun onAnimationEnd(animation: Animator) {
-                    view.visibility = View.GONE
-                }
-                override fun onAnimationCancel(animation: Animator) {}
-                override fun onAnimationRepeat(animation: Animator) {}
-            })
-        }
+    fun animateCollapse(view: View, initialHeight: Int, targetHeight: Int) {
+        val heightAnimator = ObjectAnimator.ofInt(view, "height", initialHeight, targetHeight)
+        heightAnimator.duration = Constants.ANIM_DURATION_MEDIUM
+        heightAnimator.interpolator = AccelerateDecelerateInterpolator()
+        heightAnimator.start()
     }
 
-    fun bounce(view: View, duration: Long = DEFAULT_DURATION): AnimatorSet {
-        val scaleXAnimator = ObjectAnimator.ofFloat(view, "scaleX", 1f, 1.2f, 1f)
-        val scaleYAnimator = ObjectAnimator.ofFloat(view, "scaleY", 1f, 1.2f, 1f)
-
-        return AnimatorSet().apply {
-            playTogether(scaleXAnimator, scaleYAnimator)
-            this.duration = duration
-            interpolator = AccelerateDecelerateInterpolator()
-        }
+    fun animatePress(view: View) {
+        view.animate()
+            .scaleX(0.95f)
+            .scaleY(0.95f)
+            .setDuration(Constants.ANIM_DURATION_SHORT)
+            .withEndAction {
+                view.animate()
+                    .scaleX(1f)
+                    .scaleY(1f)
+                    .setDuration(Constants.ANIM_DURATION_SHORT)
+                    .start()
+            }
+            .start()
     }
 
-    fun shake(view: View, duration: Long = DEFAULT_DURATION): ObjectAnimator {
-        return ObjectAnimator.ofFloat(view, "translationX", 0f, 25f, -25f, 25f, -25f, 15f, -15f, 6f, -6f, 0f).apply {
-            this.duration = duration
-            interpolator = AccelerateDecelerateInterpolator()
-        }
+    fun animateRipple(view: View, x: Float, y: Float) {
+        view.isPressed = true
+        view.postDelayed({ view.isPressed = false }, Constants.ANIM_DURATION_SHORT)
     }
 
-    fun rotateIn(view: View, duration: Long = DEFAULT_DURATION): AnimatorSet {
-        view.alpha = 0f
-        view.rotation = -180f
-        view.visibility = View.VISIBLE
+    fun animateBounce(view: View) {
+        val animator = ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, 0f, -20f, 0f)
+        animator.duration = Constants.ANIM_DURATION_MEDIUM
+        animator.interpolator = OvershootInterpolator()
+        animator.start()
+    }
 
-        val rotateAnimator = ObjectAnimator.ofFloat(view, "rotation", -180f, 0f)
-        val fadeAnimator = ObjectAnimator.ofFloat(view, "alpha", 0f, 1f)
+    fun animatePulse(view: View) {
+        val scaleX = ObjectAnimator.ofFloat(view, View.SCALE_X, 1f, 1.1f, 1f)
+        val scaleY = ObjectAnimator.ofFloat(view, View.SCALE_Y, 1f, 1.1f, 1f)
+        val alpha = ObjectAnimator.ofFloat(view, View.ALPHA, 1f, 0.8f, 1f)
 
-        return AnimatorSet().apply {
-            playTogether(rotateAnimator, fadeAnimator)
-            this.duration = duration
-            interpolator = AccelerateDecelerateInterpolator()
+        AnimatorSet().apply {
+            playTogether(scaleX, scaleY, alpha)
+            duration = Constants.ANIM_DURATION_LONG
+            repeatCount = ObjectAnimator.INFINITE
+            start()
         }
     }
 }

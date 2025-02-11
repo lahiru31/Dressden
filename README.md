@@ -1,88 +1,147 @@
-# Dress Den
+# Dress Den - Android E-commerce App
 
-A full-featured Android e-commerce application built with Kotlin and Java, implementing modern Android development practices.
+A full-featured Android e-commerce application built with Kotlin and Java, implementing modern Android development practices and advanced functionalities.
 
-## Features
+## Architecture & Technologies
 
-- User Authentication (Firebase)
-- Product Management
-- Shopping Cart
-- Order Processing
-- Real-time Updates
-- Sensor Integration
-- Background Processing
-- Local Notifications
-- Network State Monitoring
-- Custom Animations
-
-## Tech Stack
-
-- Kotlin & Java (Mixed codebase)
+### Core Technologies
+- Kotlin & Java mixed codebase
 - MVVM Architecture
-- Firebase Authentication
+- Android Architecture Components
+- Dependency Injection with Hilt
+- Firebase Authentication & Messaging
 - Room Database
 - Retrofit for API communication
-- Dagger Hilt for dependency injection
 - WorkManager for background tasks
-- Android Architecture Components
-- Material Design
-- Coroutines for asynchronous operations
+- Google Maps integration
+
+### Key Features
+1. **Authentication & Security**
+   - Firebase Authentication
+   - Secure API communication
+   - Token management
+
+2. **Location & Maps**
+   - Real-time location tracking
+   - Store locator
+   - Delivery tracking
+
+3. **Media Handling**
+   - Camera integration
+   - Image processing
+   - Gallery management
+
+4. **Sensors & Hardware**
+   - Accelerometer
+   - Gyroscope
+   - Proximity sensor
+   - Device orientation
+
+5. **Background Processing**
+   - Order synchronization
+   - Product updates
+   - Inventory management
+
+6. **Notifications**
+   - Push notifications (Firebase)
+   - Order status updates
+   - Promotional messages
+   - Chat messages
+
+7. **Telephony**
+   - Phone calls
+   - SMS integration
+   - Contact management
 
 ## Project Structure
 
 ```
 app/
+├── build.gradle           # App level build configuration
 ├── src/
 │   └── main/
 │       ├── java/com/dressden/app/
-│       │   ├── data/           # Data layer (repositories, models, data sources)
-│       │   ├── di/            # Dependency injection modules
-│       │   ├── ui/            # UI layer (activities, fragments, viewmodels)
-│       │   └── utils/         # Utility classes
-│       └── res/               # Android resources
+│       │   ├── data/           # Data layer
+│       │   │   ├── api/       # API interfaces and implementations
+│       │   │   ├── local/     # Local database and preferences
+│       │   │   ├── models/    # Data models
+│       │   │   └── repository/# Repositories
+│       │   ├── di/            # Dependency injection
+│       │   ├── services/      # Background services
+│       │   ├── ui/            # UI layer
+│       │   │   ├── activities/# Activities
+│       │   │   ├── adapters/  # RecyclerView adapters
+│       │   │   ├── fragments/ # Fragments
+│       │   │   └── viewmodels/# ViewModels
+│       │   └── utils/         # Utilities
+│       │       ├── animations/# Animation utilities
+│       │       ├── location/  # Location utilities
+│       │       ├── media/     # Media utilities
+│       │       ├── permissions/# Permission handling
+│       │       ├── sensors/   # Sensor utilities
+│       │       ├── telephony/ # Phone and SMS utilities
+│       │       └── workers/   # Background workers
+│       └── res/              # Resources
 ```
 
 ## Setup Instructions
 
-1. Clone the repository:
-```bash
-git clone https://github.com/lahiru31/Dressden.git
-```
+1. **Prerequisites**
+   - Android Studio Arctic Fox or later
+   - JDK 11 or later
+   - Android SDK 31 or later
 
-2. Open the project in Android Studio
+2. **Firebase Setup**
+   - Create a Firebase project
+   - Add Android app to Firebase project
+   - Download `google-services.json`
+   - Place in app/ directory
 
-3. Firebase Setup:
-   - Create a new Firebase project in the Firebase Console
-   - Add your Android app to the Firebase project
-   - Download `google-services.json` and place it in the app directory
-   - Enable Authentication in Firebase Console
+3. **API Configuration**
+   - Update `Constants.kt` with your API endpoints
+   - Configure API authentication in `AuthInterceptor.kt`
 
-4. Build and run the project
+4. **Maps Setup**
+   - Get Google Maps API key
+   - Add to `AndroidManifest.xml`
 
-## Development Environment
+5. **Build & Run**
+   ```bash
+   # Clone repository
+   git clone https://github.com/your-repo/dress-den.git
 
-- Android Studio Hedgehog | 2023.1.1
-- Minimum SDK: 24 (Android 7.0)
-- Target SDK: 34 (Android 14)
-- Kotlin version: 1.9.20
-- Gradle version: 8.2.0
+   # Open in Android Studio
+   # Sync project with Gradle files
+   # Run on device or emulator
+   ```
 
-## Architecture
+## Architecture Components
 
-The app follows MVVM (Model-View-ViewModel) architecture pattern and Clean Architecture principles:
+### Managers
+- `LocationManager`: Handles location services and tracking
+- `MediaManager`: Manages camera and media operations
+- `NotificationManager`: Handles all notifications
+- `PermissionManager`: Manages runtime permissions
+- `SensorManager`: Controls device sensors
+- `TelephonyManager`: Handles calls and SMS
+- `WorkerManager`: Manages background tasks
 
-- **UI Layer**: Activities, Fragments, ViewModels
-- **Domain Layer**: Use Cases, Models
-- **Data Layer**: Repositories, Data Sources (Local & Remote)
+### Background Processing
+- `OrderSyncWorker`: Synchronizes orders with backend
+- `FirebaseMessagingService`: Handles push notifications
+
+### Base Components
+- `BaseActivity`: Common functionality for activities
+- `DressDenApplication`: Application initialization
 
 ## Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+2. Create feature branch
+3. Commit changes
+4. Push to branch
+5. Create Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.

@@ -3,104 +3,198 @@ package com.dressden.app.data.repository
 import com.dressden.app.data.api.ApiService
 import com.dressden.app.data.local.PreferenceManager
 import com.dressden.app.data.models.User
+import com.dressden.app.utils.Resource
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AuthRepository @Inject constructor(
-    private val firebaseAuth: FirebaseAuth,
     private val apiService: ApiService,
+    private val firebaseAuth: FirebaseAuth,
+    private val firestore: FirebaseFirestore,
     private val preferenceManager: PreferenceManager
 ) {
-    suspend fun signInWithEmail(email: String, password: String): Result<User> {
+    data class AuthResult(
+        val userId: String,
+        val token: String
+    )
+
+    suspend fun login(email: String, password: String): Resource<AuthResult> {
         return try {
+            // Firebase Authentication
             val authResult = firebaseAuth.signInWithEmailAndPassword(email, password).await()
-            val firebaseUser = authResult.user ?: throw Exception("Authentication failed")
+            val user = authResult.user ?: throw Exception("Authentication failed")
             
-            // Get user details from backend and ensure profile is updated
-            val user = apiService.getUserProfile(firebaseUser.uid)
-            preferenceManager.saveUser(user)
-            preferenceManager.saveAuthToken(firebaseUser.getIdToken(false).await().token ?: "")
-            
-            Result.success(user)
+            // Get ID token
+            val token = user.getIdToken(false).await().token
+                ?: throw Exception("Failed to get authentication token")
+
+            // Sync with backend
+            val response = apiService.login(email, token)
+            if (!response.isSuccessful) {
+                throw Exception(response.message())
+            }
+
+            Resource.Success(AuthResult(user.uid, token))
         } catch (e: Exception) {
-            Result.failure(e)
+            Resource.Error(e.message ?: "Login failed")
         }
     }
 
-    suspend fun signUpWithEmail(
+    suspend fun register(
+        name: String,
         email: String,
         password: String,
-        firstName: String,
-        lastName: String,
-        phoneNumber: String?
-    ): Result<User> {
+        phone: String
+    ): Resource<AuthResult> {
         return try {
+            // Firebase Authentication
             val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-            val firebaseUser = authResult.user ?: throw Exception("User creation failed")
+            val user = authResult.user ?: throw Exception("Registration failed")
             
-            // Create user profile in backend
-            val user = User(
-                id = firebaseUser.uid,
-                email = email,
-                firstName = firstName,
-                lastName = lastName,
-                phoneNumber = phoneNumber
+            // Get ID token
+            val token = user.getIdToken(false).await().token
+                ?: throw Exception("Failed to get authentication token")
+
+            // Create user profile in Firestore
+            val userProfile = hashMapOf(
+                "id" to user.uid,
+                "name" to name,
+                "email" to email,
+                "phone" to phone,
+                "createdAt" to System.currentTimeMillis(),
+                "updatedAt" to System.currentTimeMillis()
             )
-            
-            val createdUser = apiService.createUserProfile(user)
-            preferenceManager.saveUser(createdUser)
-            preferenceManager.saveAuthToken(firebaseUser.getIdToken(false).await().token ?: "")
-            
-            Result.success(createdUser)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 
-    suspend fun signInWithGoogle(idToken: String): Result<User> {
-        return try {
-            val credential = GoogleAuthProvider.getCredential(idToken, null)
-            val authResult = firebaseAuth.signInWithCredential(credential).await()
-            val firebaseUser = authResult.user ?: throw Exception("Google authentication failed")
-            
-            // Get or create user profile in backend
-            val user = try {
-                apiService.getUserProfile(firebaseUser.uid)
-            } catch (e: Exception) {
-                // User doesn't exist, create new profile
-                val newUser = User(
-                    id = firebaseUser.uid,
-                    email = firebaseUser.email ?: "",
-                    firstName = firebaseUser.displayName?.split(" ")?.firstOrNull() ?: "",
-                    lastName = firebaseUser.displayName?.split(" ")?.lastOrNull() ?: "",
-                    profileImageUrl = firebaseUser.photoUrl?.toString()
-                )
-                apiService.createUserProfile(newUser)
+            firestore.collection("users")
+                .document(user.uid)
+                .set(userProfile)
+                .await()
+
+            // Sync with backend
+            val response = apiService.register(name, email, phone, token)
+            if (!response.isSuccessful) {
+                throw Exception(response.message())
             }
-            
-            preferenceManager.saveUser(user)
-            preferenceManager.saveAuthToken(firebaseUser.getIdToken(false).await().token ?: "")
-            
-            Result.success(user)
+
+            Resource.Success(AuthResult(user.uid, token))
         } catch (e: Exception) {
-            Result.failure(e)
+            Resource.Error(e.message ?: "Registration failed")
         }
     }
 
-    suspend fun signOut() {
-        firebaseAuth.signOut()
-        preferenceManager.clearAll()
+    suspend fun logout() {
+        try {
+            // Firebase logout
+            firebaseAuth.signOut()
+
+            // Backend logout
+            val token = preferenceManager.authToken
+            if (!token.isNullOrEmpty()) {
+                apiService.logout("Bearer $token")
+            }
+
+            // Clear local data
+            preferenceManager.clearAuth()
+        } catch (e: Exception) {
+            // Log error but don't throw - we want to clear local data even if server sync fails
+            e.printStackTrace()
+        }
     }
 
-    fun isUserSignedIn(): Boolean {
-        return firebaseAuth.currentUser != null && preferenceManager.getAuthToken() != null
+    suspend fun resetPassword(email: String): Resource<Unit> {
+        return try {
+            firebaseAuth.sendPasswordResetEmail(email).await()
+            Resource.Success(Unit)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Password reset failed")
+        }
     }
 
-    suspend fun getCurrentUser(): User? {
-        return preferenceManager.getUser()
+    suspend fun getUserProfile(userId: String): Resource<User> {
+        return try {
+            // Get from Firestore
+            val document = firestore.collection("users")
+                .document(userId)
+                .get()
+                .await()
+
+            if (!document.exists()) {
+                throw Exception("User profile not found")
+            }
+
+            // Get from backend for additional data
+            val response = apiService.getUserProfile("Bearer ${preferenceManager.authToken}")
+            if (!response.isSuccessful) {
+                throw Exception(response.message())
+            }
+
+            val user = response.body() ?: throw Exception("Failed to get user profile")
+            Resource.Success(user)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Failed to get user profile")
+        }
+    }
+
+    suspend fun updateUserProfile(
+        userId: String,
+        name: String?,
+        phone: String?,
+        address: Map<String, String>?
+    ): Resource<User> {
+        return try {
+            val updates = mutableMapOf<String, Any>()
+            name?.let { updates["name"] = it }
+            phone?.let { updates["phone"] = it }
+            address?.let { updates["address"] = it }
+            updates["updatedAt"] = System.currentTimeMillis()
+
+            // Update Firestore
+            firestore.collection("users")
+                .document(userId)
+                .update(updates)
+                .await()
+
+            // Update backend
+            val response = apiService.updateUserProfile(
+                "Bearer ${preferenceManager.authToken}",
+                name,
+                phone,
+                address
+            )
+            if (!response.isSuccessful) {
+                throw Exception(response.message())
+            }
+
+            val updatedUser = response.body() ?: throw Exception("Failed to update user profile")
+            Resource.Success(updatedUser)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Failed to update user profile")
+        }
+    }
+
+    suspend fun updateFcmToken(userId: String, token: String) {
+        try {
+            // Update Firestore
+            firestore.collection("users")
+                .document(userId)
+                .update("fcmToken", token)
+                .await()
+
+            // Update backend
+            val response = apiService.updateFcmToken(
+                "Bearer ${preferenceManager.authToken}",
+                token
+            )
+            if (!response.isSuccessful) {
+                throw Exception(response.message())
+            }
+        } catch (e: Exception) {
+            // Log error but don't throw - FCM token updates are not critical
+            e.printStackTrace()
+        }
     }
 }
