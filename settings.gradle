@@ -17,9 +17,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "DressDen"
 include ':app'
-
-// Enable configuration cache
-enableFeaturePreview('CONFIGURATION_CACHE')
-
-// Enable type-safe project accessors
-enableFeaturePreview('TYPESAFE_PROJECT_ACCESSORS')
