@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/navigation_home">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.dressden.app.ui.fragments.HomeFragment"
+        android:label="@string/title_home">
+        <action
+            android:id="@+id/action_home_to_productDetail"
+            app:destination="@id/productDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_categories"
+        android:name="com.dressden.app.ui.fragments.CategoriesFragment"
+        android:label="@string/title_categories">
+        <action
+            android:id="@+id/action_categories_to_productList"
+            app:destination="@id/productListFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_cart"
+        android:name="com.dressden.app.ui.fragments.CartFragment"
+        android:label="@string/title_cart">
+        <action
+            android:id="@+id/action_cart_to_checkout"
+            app:destination="@id/checkoutFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.dressden.app.ui.fragments.ProfileFragment"
+        android:label="@string/title_profile">
+        <action
+            android:id="@+id/action_profile_to_orders"
+            app:destination="@id/ordersFragment" />
+        <action
+            android:id="@+id/action_profile_to_settings"
+            app:destination="@id/settingsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/productDetailFragment"
+        android:name="com.dressden.app.ui.fragments.ProductDetailFragment"
+        android:label="Product Details">
+        <argument
+            android:name="productId"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/productListFragment"
+        android:name="com.dressden.app.ui.fragments.ProductListFragment"
+        android:label="Products">
+        <argument
+            android:name="categoryId"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/checkoutFragment"
+        android:name="com.dressden.app.ui.fragments.CheckoutFragment"
+        android:label="Checkout" />
+
+    <fragment
+        android:id="@+id/ordersFragment"
+        android:name="com.dressden.app.ui.fragments.OrdersFragment"
+        android:label="My Orders" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.dressden.app.ui.fragments.SettingsFragment"
+        android:label="Settings" />
+
+    <!-- Authentication related destinations -->
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.dressden.app.ui.fragments.auth.LoginFragment"
+        android:label="Login">
+        <action
+            android:id="@+id/action_login_to_register"
+            app:destination="@id/registerFragment" />
+        <action
+            android:id="@+id/action_login_to_forgotPassword"
+            app:destination="@id/forgotPasswordFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.dressden.app.ui.fragments.auth.RegisterFragment"
+        android:label="Register" />
+
+    <fragment
+        android:id="@+id/forgotPasswordFragment"
+        android:name="com.dressden.app.ui.fragments.auth.ForgotPasswordFragment"
+        android:label="Forgot Password" />
+
+</navigation>
